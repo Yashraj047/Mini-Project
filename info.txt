@@ -1,0 +1,8 @@
+ Users post likh paayenge 
+ Login and register karna hai
+ Logout karna hai
+ Post Creation
+ Post like
+ Post delete joh ki sirf Administrator kar sakta hai 
+
+ 
