@@ -5,6 +5,7 @@ const postModel = require('./models/post');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const post = require('./models/post');
 
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
@@ -15,9 +16,23 @@ app.get('/', (req, res) => {
   res.render('index');
 });
 
-app.get('/profile', isLoggedIn, (req, res) => {
-  console.log(req.user);
-  res.render('login');
+app.get('/profile', isLoggedIn,async (req, res) => {
+  let user = await userModel.findOne({email: req.user.email}).populate('posts');
+  res.render('profile' , { user });
+});
+
+app.post('/post', isLoggedIn, async (req, res) => {
+  let user = await userModel.findOne({email: req.user.email});
+  let { content } = req.body;
+
+  let post = await postModel.create({
+    user: user._id,
+    content
+  });
+
+  user.posts.push(post._id);
+  await user.save();
+  res.redirect('/profile');
 });
 
 app.get('/login', (req, res) => {
@@ -59,7 +74,7 @@ app.post('/login', async (req, res) => {
     if (result) {
       let token = jwt.sign({ email: email, userid: user._id }, 'secretkey');
       res.cookie('token', token);
-      res.status(200).send('User logged in successfully');
+      res.status(200).redirect('/profile');
     } else {
       res.status(400).send('Invalid email or password');
     }
@@ -73,7 +88,7 @@ app.get('/logout', (req, res) => {
 
 
 function isLoggedIn(req, res, next) {
-  if(req.cookies.token === '') res.send("You are not logged in");
+  if(req.cookies.token === '') res.redirect("/login");
   else {
     let data = jwt.verify(req.cookies.token, 'secretkey');
     req.user = data;
@@ -81,6 +96,7 @@ function isLoggedIn(req, res, next) {
   next();
 }
 app.listen(2000);
+console.log('Server is running on port 2000');
 
 
 
@@ -116,3 +132,19 @@ app.listen(2000);
 // isLoggedIn middleware banaya, jo check karta hai ki user logged in hai ya nahi (JWT verify karta hai)
 
 // server ko port 2000 pe listen karwaya
+
+/* Naye comments (Hinglish me):
+
+// /post route add kiya, jo logged in user ke liye naya post create karta hai:
+//   - user ko find karta hai JWT ke email se
+//   - post create karta hai postModel me (user ki id aur content ke saath)
+//   - user ke posts array me naya post add karta hai
+//   - user ko save karta hai database me
+//   - profile page pe redirect karta hai
+
+// profile route me populate('posts') use kiya, taki user ke saare posts bhi mil jayein
+
+// logout route me token cookie ko empty string set kiya (logout karne ke liye)
+
+// isLoggedIn middleware me JWT token verify kiya, aur req.user me user ka data daala
+*/
