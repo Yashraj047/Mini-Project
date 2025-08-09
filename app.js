@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const mongoose = require('mongoose');
 const userModel = require('./models/user');
 const postModel = require('./models/post');
 const cookieParser = require('cookie-parser');
@@ -11,6 +12,7 @@ app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.json());
+app.use(express.json());
 
 app.get('/', (req, res) => {
   res.render('index');
@@ -19,6 +21,35 @@ app.get('/', (req, res) => {
 app.get('/profile', isLoggedIn,async (req, res) => {
   let user = await userModel.findOne({email: req.user.email}).populate('posts');
   res.render('profile' , { user });
+});
+
+
+app.get('/like/:id', isLoggedIn,async (req, res) => {
+  let post = await postModel.findOne({_id: req.params.id}).populate('user');
+
+  if(post.likes.indexOf(req.user.userid) === -1) {
+    post.likes.push(req.user.userid);
+  } else {
+    post.likes.splice(post.likes.indexOf(req.user.userid), 1);
+  }
+  await post.save();
+  res.redirect('/profile');
+});
+
+app.get('/edit/:id', isLoggedIn,async (req, res) => {
+  let post = await postModel.findOne({_id: req.params.id}).populate('user');
+
+  res.render('edit', { post });
+});
+
+
+app.post('/update/:id', isLoggedIn, async (req, res) => {
+  const { content } = req.body;
+  await postModel.findOneAndUpdate(
+    { _id: req.params.id },
+    { content: content }
+  );
+  res.redirect('/profile');
 });
 
 app.post('/post', isLoggedIn, async (req, res) => {
@@ -100,6 +131,8 @@ console.log('Server is running on port 2000');
 
 
 
+
+
 // express module ko import kiya, app banaya
 // userModel aur postModel ko import kiya (user aur post schema/model ke liye)
 // cookie-parser ko import kiya (cookies handle karne ke liye)
@@ -147,4 +180,23 @@ console.log('Server is running on port 2000');
 // logout route me token cookie ko empty string set kiya (logout karne ke liye)
 
 // isLoggedIn middleware me JWT token verify kiya, aur req.user me user ka data daala
+*/
+
+/* Updates
+
+// /like/:id route banaya, jo post ko like/unlike karta hai:
+//   - post ko find karta hai postModel se (id ke basis pe)
+//   - agar user ne post like nahi kiya hai to likes array me user ki id daal deta hai
+//   - agar already like kiya hai to likes array se user ki id hata deta hai
+//   - post ko save karta hai database me
+//   - profile page pe redirect karta hai
+
+// /edit/:id route banaya, jo post ko edit karne ke liye edit.ejs render karta hai:
+//   - post ko find karta hai postModel se (id ke basis pe)
+//   - edit.ejs ko render karta hai post ke data ke saath
+
+// /update/:id route banaya, jo post ko update karta hai:
+//   - post ki content ko update karta hai postModel me (id ke basis pe)
+//   - profile page pe redirect karta hai
+
 */
