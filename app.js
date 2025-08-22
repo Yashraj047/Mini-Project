@@ -7,15 +7,30 @@ const cookieParser = require('cookie-parser');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const post = require('./models/post');
+const crypto = require('crypto');
+const path = require('path');
+const multerconfig = require('./config/multerconfig');
+const upload = require('./config/multerconfig');
 
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.json());
-app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', (req, res) => {
   res.render('index');
+});
+
+app.get('/profile/upload', (req, res) => {
+  res.render('profileupload');
+});
+
+app.post('/upload',isLoggedIn, upload.single('profilepic'), async (req, res) => {
+  let user = await userModel.findOne({email: req.user.email});
+  user.profilepic = req.file.filename;
+  await user.save();
+  res.redirect('/profile');
 });
 
 app.get('/profile', isLoggedIn,async (req, res) => {
@@ -89,7 +104,8 @@ app.post('/register', async (req, res) => {
       });
       let token = jwt.sign({ email: email, userid: user._id }, 'secretkey');
       res.cookie('token', token);
-      res.send('User registered successfully');
+      res.redirect('/profile');
+      console.log("User registered successfully");
     });
   });
 });
@@ -128,9 +144,6 @@ function isLoggedIn(req, res, next) {
 }
 app.listen(2000);
 console.log('Server is running on port 2000');
-
-
-
 
 
 // express module ko import kiya, app banaya

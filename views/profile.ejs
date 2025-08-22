@@ -11,9 +11,14 @@
         <div class ="flex justify-end">
             <a href="/logout" class="bg-red-500 rounded-md px-3 py-2 text-sm mb-5 inline-block">Logout</a>
         </div>
-        <h3 class="text-3xl font-bold mb-5">Hi <%= user.name %>😎</h3>
+        <div class="flex items-start gap-3">
+            <div class="w-10 h-10 bg-red-500 rounded-md">
+                <img src="/images/uploads/<%= user.profilepic %>" alt="Profile Picture" class="w-full h-full object-cover rounded-md">
+            </div>
+            <h3 class="text-3xl font-bold mb-5">Hi <%= user.name %>😎</h3>
+        </div>
         <h5 class="text-lg mb-3">Write your profile details here :) </h5>
-    <form action="/post" method="post">
+        <form action="/post" method="post">
         <textarea placeholder="Write something about anything..." class="w-1/2 px-3 py-2 outline-none rounded-md bg-transparent border-2 border-zinc-800 mb-4 resize-none" name="content"></textarea>
         <input class=" w-42 px-3 py-2 bg-blue-500 block rounded-md mt-2 text-sm" type="submit" value="Create New Post">
     </form>
